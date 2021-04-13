@@ -62,7 +62,7 @@ def analyze_ref():
         intTime=0.9*intTime
         spec.integration_time_micros(intTime)   # SET INTEGRATION TIME
         print(intTime)
-        lightSource.value = 0.5 
+        lightSource.value = 0.1 
         sINT=spec.intensities(correct_nonlinearity=True)        # CONDUCT NONLINEARITY AND DARK CORRECTIONS
         lightSource.value = 0
         if max(sINT)<16500:
@@ -114,7 +114,7 @@ def analyze_sample_abs():
     intTimeStr=str(intTime)
     spec.integration_time_micros(intTime)   # SET INTEGRATION TIME
     print(intTime)
-    lightSource.value = 0.5 
+    lightSource.value = 0.1 
     sINT=spec.intensities(correct_nonlinearity=True)        # CONDUCT NONLINEARITY AND DARK CORRECTIONS
     lightSource.value = 0
 
