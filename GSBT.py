@@ -1,9 +1,13 @@
 print('Loading modules')
+#import seabreeze
+#seabreeze.use('cseabreeze')
 import seabreeze.spectrometers as sb
 import datetime, json
 import matplotlib.pyplot as plt
 from gpiozero import PWMOutputDevice as PWM
 from tkinter import (Tk, Frame, Button, Entry, Label)
+# import matplotlib
+# matplotlib.use('TkAgg')
 import numpy as np
 import pandas as pd
   
@@ -54,7 +58,7 @@ def analyze_ref():
     
     # Collect spectrum
     intTime = int(integration_time_entry.get())*1000 # integration time from entry converted to microseconds
-    lightSource = PWM(17,initial_value=0,frequency=100)  # Activate light source
+    lightSource = PWM(18,initial_value=0,frequency=100)  # Activate light source
     highIntensity = True
     # To make sure integration time is not too high
     while highIntensity == True:
@@ -74,12 +78,15 @@ def analyze_ref():
     sWVL=spec.wavelengths() # GET WAVELENGTHS FROM SPECTROMETER
 
     # Write spectrum to csv and json files
+    #oSpecFN=('spec_'+sample_name+"_"+meas_ang+'_'+
+             #intTimeStr+'_'+parDict['locCode']+'_'+datetime_an+'.json') # CREATE OUTPUT JSON FILE FOR SPECTRA
     oSpecFN=('spec_'+sample_name+"_"+meas_ang+'_'+
-             intTimeStr+'_'+parDict['locCode']+'_'+datetime_an+'.json') # CREATE OUTPUT JSON FILE FOR SPECTRA
+             intTimeStr+'_'+'_'+datetime_an+'.json') # CREATE OUTPUT JSON FILE FOR SPECTRA
     oSpecFNcsv=oSpecFN.replace('.json','.csv')
     oSpecFL=open(specDir+oSpecFN,'w')
     print(oSpecFN)
-    dSpec={'locCode':parDict['locCode'],'sWVL':sWVL.tolist(),'sINT':sINT.tolist()}  # GET SPECTRA FROM SPECTROMETER
+#     dSpec={'locCode':parDict['locCode'],'sWVL':sWVL.tolist(),'sINT':sINT.tolist()}  # GET SPECTRA FROM SPECTROMETER
+    dSpec={'sWVL':sWVL.tolist(),'sINT':sINT.tolist()}  # GET SPECTRA FROM SPECTROMETER
     json.dump(dSpec,oSpecFL)                          # SAVE IN JSON FILE
     oSpecFL.close()                                         # WRITE JSON FILE
     writeCSV(sWVL,sINT,specDir+oSpecFNcsv)
@@ -110,7 +117,7 @@ def analyze_sample_abs():
     time_an = datetime_an.split('T')[1]
     
     # Get spectrum
-    lightSource = PWM(17,initial_value=0,frequency=100)  # Activate light source
+    lightSource = PWM(18,initial_value=0,frequency=100)  # Activate light source
     intTimeStr=str(intTime)
     spec.integration_time_micros(intTime)   # SET INTEGRATION TIME
     print(intTime)
@@ -124,12 +131,15 @@ def analyze_sample_abs():
 
     # Write spectrum to csv and json
     
+#     oSpecFN=('spec_'+sample_name+"_"+filtered+'_'+date_col+'_'+meas_ang+'_'+
+#              intTimeStr+'_'+parDict['locCode']+'_'+datetime_an+'.json') # CREATE OUTPUT JSON FILE FOR SPECTRA
     oSpecFN=('spec_'+sample_name+"_"+filtered+'_'+date_col+'_'+meas_ang+'_'+
-             intTimeStr+'_'+parDict['locCode']+'_'+datetime_an+'.json') # CREATE OUTPUT JSON FILE FOR SPECTRA
+             intTimeStr+'_'+'_'+datetime_an+'.json') # CREATE OUTPUT JSON FILE FOR SPECTRA
     oSpecFNcsv=oSpecFN.replace('.json','.csv')
     oSpecFL=open(specDir+oSpecFN,'w')
     print(oSpecFN)
-    dSpec={'locCode':parDict['locCode'],'sWVL':sWVL.tolist(),'sINT':sINT.tolist()}  # GET SPECTRA FROM SPECTROMETER
+#     dSpec={'locCode':parDict['locCode'],'sWVL':sWVL.tolist(),'sINT':sINT.tolist()}  # GET SPECTRA FROM SPECTROMETER
+    dSpec={'sWVL':sWVL.tolist(),'sINT':sINT.tolist()}  # GET SPECTRA FROM SPECTROMETER
     json.dump(dSpec,oSpecFL)                          # SAVE IN JSON FILE
     oSpecFL.close()                                         # WRITE JSON FILE
     writeCSV(sWVL,sINT,specDir+oSpecFNcsv)
@@ -172,15 +182,15 @@ def analyze_sample_abs():
     
 ################################################# DEFAULTS
 
-parFile='/home/pi/WQspec/specPars_v2.txt'  # LOCATION OF PARAMETER FILE
-specDir='/home/pi/WQspec/spectra/'      # LOCATION WHERE RAW SPECTRA ARE SAVED
-absDir='/home/pi/WQspec/abs/'      # LOCATION WHERE ABSORBANCE SPECTRA ARE SAVED
+parFile='/home/water-gator/GSBT/specPars_v2.txt'  # LOCATION OF PARAMETER FILE
+specDir='/home/water-gator/GSBT/spectra/'      # LOCATION WHERE RAW SPECTRA ARE SAVED
+absDir='/home/water-gator/GSBT/abs/'      # LOCATION WHERE ABSORBANCE SPECTRA ARE SAVED
 
 
 ############################### Read parameters
 
-print('Reading parameters')
-parDict=readPars(parFile)
+# print('Reading parameters')
+# parDict=readPars(parFile)
 
 ################################################# PROCESS
 
@@ -214,7 +224,7 @@ collection_date_lab = Label(frame,text ='Collection Date (MM-dd-YYYY)')
 collection_date_lab.pack(padx = 5, pady = 5)
  
 collection_date_entry = Entry(frame, width = 20)
-collection_date_entry.insert(0,'e.g., "11-04-1991"')
+collection_date_entry.insert(0,'e.g., "10-19-2022"')
 collection_date_entry.pack(padx = 5, pady = 5)
 
 sample_filter_lab = Label(frame,text ='Filtered (True or False)')
@@ -235,7 +245,7 @@ integration_time_lab = Label(frame,text ='Integration Time (ms)')
 integration_time_lab.pack(padx = 5, pady = 5)
 
 integration_time_entry = Entry(frame, width = 20)
-integration_time_entry.insert(0,'e.g., "25"')
+integration_time_entry.insert(0,'e.g., "23"')
 integration_time_entry.pack(padx = 5, pady = 5)
  
 ref_Button = Button(frame, text = "Collect Reference", command = analyze_ref)
