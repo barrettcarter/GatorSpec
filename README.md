@@ -3,8 +3,8 @@ Code and files for benchtop UV-Visible spectroscopy setup.
 This system consists of a mini Ocean Optics UV-Visible spectrophotometer (STS-UV) and a miniature Hamamatsu xenon flash lamp housed in a 3D-printed enclosure and controlled using a Python script run on a Raspberry Pi.
 
 # Setup
-The system was originally developed to be run using a Raspberry Pi model 3B+ with the Raspbian Stretch OS. Later, the system was upgraded to a RPi model 4 with 1 GB of RAM running Raspberry Pi OS.
-The system uses a Python library called 'seabreeze' which can be installed on the RPi using pip in the RPi terminal window by typing in the following command:
+This version of the repository was developed to be used with a RPi model 4 with 1 GB of RAM running Raspberry Pi OS (Bullseye, 32-bit).
+The control program uses a Python library called 'seabreeze' which can be installed on the RPi using pip in the RPi terminal window by typing in the following command:
 
 pip install seabreeze
 
