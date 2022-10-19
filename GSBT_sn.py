@@ -1,11 +1,14 @@
 print('Loading modules')
-import seabreeze.spectrometers as sb
+import stellarnet_driver3 as sn
 import datetime, json
 import matplotlib.pyplot as plt
 from gpiozero import PWMOutputDevice as PWM
 from tkinter import (Tk, Frame, Button, Entry, Label)
+# import matplotlib
+# matplotlib.use('TkAgg')
 import numpy as np
 import pandas as pd
+from time import sleep
   
 print('...done loading modules')
 
@@ -40,6 +43,37 @@ def writeCSV(iWVL,iSPEC,oFN):
 
 ref_col = False
 
+#function to get spectrum
+def getSpectrum(spectrometer, wav):
+    spectrum = sn.array_spectrum(spectrometer, wav)
+    return spectrum
+#function to set parameters
+def setparam(spectrometer, wav, inttime, xtiming, scansavg, smooth):
+
+    spectrometer['device'].set_config(
+        int_time=inttime,
+        x_timing=xtiming,
+        scans_to_avg=scansavg,
+        x_smooth=smooth)
+    
+spectrometer,wav = sn.array_get_spec(0)
+
+global scansavg
+global smooth
+global xtiming
+
+scansavg = 1
+smooth = 1
+xtiming = 1
+
+
+global PMWfreq
+#global delay_ms
+
+
+PMWfreq = 50
+#delay_ms = 15
+
 def analyze_ref():
 
     # Variables to be used in function and elsewhere
@@ -47,39 +81,54 @@ def analyze_ref():
     global sINT_ref
     global sWVL
     global ref_col
+    global delay_ms
     
     sample_name = 'ref'
     meas_ang = measurement_angle_entry.get()
     datetime_an = datetime.datetime.now().isoformat()
     
     # Collect spectrum
-    intTime = int(integration_time_entry.get())*1000 # integration time from entry converted to microseconds
-    lightSource = PWM(17,initial_value=0,frequency=100)  # Activate light source
-    highIntensity = True
-    # To make sure integration time is not too high
-    while highIntensity == True:
-        print('Intensity too high. Lowering integration time to')
-        intTime=0.9*intTime
-        spec.integration_time_micros(intTime)   # SET INTEGRATION TIME
-        print(intTime)
-        lightSource.value = 0.1 
-        sINT=spec.intensities(correct_nonlinearity=True)        # CONDUCT NONLINEARITY AND DARK CORRECTIONS
-        lightSource.value = 0
-        if max(sINT)<16500:
-            highIntensity = False
-
+    intTime = int(integration_time_entry.get()) # integration time from entry converted to microseconds
+    delay_ms = float(delay_time_entry.get())
+    # LIGHT SOURCE FREQUENCY SHOULD BE BETWEEN 10 AND 80 HZ!
+    lightSource = PWM(18,initial_value=0,frequency=PMWfreq)  # Activate light source
+#     highIntensity = True
+#     # To make sure integration time is not too high
+#     while highIntensity == True:
+#         print('Intensity too high. Lowering integration time to')
+#         intTime=0.9*intTime
+#         spec.integration_time_micros(intTime)   # SET INTEGRATION TIME
+#         print(intTime)
+#         lightSource.value = 0.1 
+#         sINT=spec.intensities(correct_nonlinearity=True)        # CONDUCT NONLINEARITY AND DARK CORRECTIONS
+#         lightSource.value = 0
+#         if max(sINT)<16500:
+#             highIntensity = False
+    setparam(spectrometer, wav, intTime, xtiming, scansavg, smooth)
+    #setparam(spectrometer, wav, intTime)
+    
+    sleep(0.01)
+    #data = getSpectrum(spectrometer, wav) # collect power spectrum
+    lightSource.value = 0.1 # turn on light source
+    sleep(delay_ms/1000)
+    data = getSpectrum(spectrometer, wav) # collect power spectrum
+    lightSource.value = 0 # turn off light source
+    sINT = data[:,1] # intensities
+    sWVL=data[:,0] # wavelengths
+    
     intTimeStr=str(intTime)    
     sINT_ref = sINT
     
-    sWVL=spec.wavelengths() # GET WAVELENGTHS FROM SPECTROMETER
-
     # Write spectrum to csv and json files
+    #oSpecFN=('spec_'+sample_name+"_"+meas_ang+'_'+
+             #intTimeStr+'_'+parDict['locCode']+'_'+datetime_an+'.json') # CREATE OUTPUT JSON FILE FOR SPECTRA
     oSpecFN=('spec_'+sample_name+"_"+meas_ang+'_'+
-             intTimeStr+'_'+parDict['locCode']+'_'+datetime_an+'.json') # CREATE OUTPUT JSON FILE FOR SPECTRA
+             intTimeStr+'_'+'_'+datetime_an+'.json') # CREATE OUTPUT JSON FILE FOR SPECTRA
     oSpecFNcsv=oSpecFN.replace('.json','.csv')
     oSpecFL=open(specDir+oSpecFN,'w')
     print(oSpecFN)
-    dSpec={'locCode':parDict['locCode'],'sWVL':sWVL.tolist(),'sINT':sINT.tolist()}  # GET SPECTRA FROM SPECTROMETER
+#     dSpec={'locCode':parDict['locCode'],'sWVL':sWVL.tolist(),'sINT':sINT.tolist()}  # GET SPECTRA FROM SPECTROMETER
+    dSpec={'sWVL':sWVL.tolist(),'sINT':sINT.tolist()}  # GET SPECTRA FROM SPECTROMETER
     json.dump(dSpec,oSpecFL)                          # SAVE IN JSON FILE
     oSpecFL.close()                                         # WRITE JSON FILE
     writeCSV(sWVL,sINT,specDir+oSpecFNcsv)
@@ -90,7 +139,7 @@ def analyze_ref():
     plt.xlabel('wavelength (nm)')
     plt.ylabel('intensity')
     plt.legend(loc='upper right')
-    plt.ylim([0,16000])
+    #plt.ylim([0,16000])
     plt.show(block=False)
     print('Reference collected.')
     ref_col = True
@@ -110,13 +159,20 @@ def analyze_sample_abs():
     time_an = datetime_an.split('T')[1]
     
     # Get spectrum
-    lightSource = PWM(17,initial_value=0,frequency=100)  # Activate light source
+    lightSource = PWM(18,initial_value=0,frequency=PMWfreq)  # Activate light source
+#     print('freq = '+str(lightSource.frequency)+' Hz')
+#     print('delay = '+str(delay_ms)+' ms')
     intTimeStr=str(intTime)
-    spec.integration_time_micros(intTime)   # SET INTEGRATION TIME
-    print(intTime)
-    lightSource.value = 0.1 
-    sINT=spec.intensities(correct_nonlinearity=True)        # CONDUCT NONLINEARITY AND DARK CORRECTIONS
-    lightSource.value = 0
+    
+    sleep(0.01)
+    #data = getSpectrum(spectrometer, wav) # collect power spectrum
+    #lightSource.value = 0.1 # turn on light source (PWM)
+    lightSource.value = 1 # turn on light source (fully on)
+    sleep(delay_ms/1000)
+    data = getSpectrum(spectrometer, wav) # collect power spectrum
+    lightSource.value = 0 # turn off light source
+    sINT = data[:,1] # intensities
+    sWVL=data[:,0] # wavelengths
 
     # Compare to reference
     if max(sINT)/max(sINT_ref)<0.9 or max(sINT)/max(sINT_ref)>1.1:
@@ -124,12 +180,15 @@ def analyze_sample_abs():
 
     # Write spectrum to csv and json
     
+#     oSpecFN=('spec_'+sample_name+"_"+filtered+'_'+date_col+'_'+meas_ang+'_'+
+#              intTimeStr+'_'+parDict['locCode']+'_'+datetime_an+'.json') # CREATE OUTPUT JSON FILE FOR SPECTRA
     oSpecFN=('spec_'+sample_name+"_"+filtered+'_'+date_col+'_'+meas_ang+'_'+
-             intTimeStr+'_'+parDict['locCode']+'_'+datetime_an+'.json') # CREATE OUTPUT JSON FILE FOR SPECTRA
+             intTimeStr+'_'+'_'+datetime_an+'.json') # CREATE OUTPUT JSON FILE FOR SPECTRA
     oSpecFNcsv=oSpecFN.replace('.json','.csv')
     oSpecFL=open(specDir+oSpecFN,'w')
     print(oSpecFN)
-    dSpec={'locCode':parDict['locCode'],'sWVL':sWVL.tolist(),'sINT':sINT.tolist()}  # GET SPECTRA FROM SPECTROMETER
+#     dSpec={'locCode':parDict['locCode'],'sWVL':sWVL.tolist(),'sINT':sINT.tolist()}  # GET SPECTRA FROM SPECTROMETER
+    dSpec={'sWVL':sWVL.tolist(),'sINT':sINT.tolist()}  # GET SPECTRA FROM SPECTROMETER
     json.dump(dSpec,oSpecFL)                          # SAVE IN JSON FILE
     oSpecFL.close()                                         # WRITE JSON FILE
     writeCSV(sWVL,sINT,specDir+oSpecFNcsv)
@@ -141,7 +200,7 @@ def analyze_sample_abs():
     plt.xlabel('wavelength (nm)')
     plt.ylabel('intensity')
     plt.legend(loc='upper right')
-    plt.ylim([0,16000])
+    #plt.ylim([0,16000])
     plt.show(block=False)
     print('Sample analyzed.')
     
@@ -172,27 +231,15 @@ def analyze_sample_abs():
     
 ################################################# DEFAULTS
 
-parFile='/home/pi/WQspec/specPars_v2.txt'  # LOCATION OF PARAMETER FILE
-specDir='/home/pi/WQspec/spectra/'      # LOCATION WHERE RAW SPECTRA ARE SAVED
-absDir='/home/pi/WQspec/abs/'      # LOCATION WHERE ABSORBANCE SPECTRA ARE SAVED
+parFile='/home/water-gator/GSBT/specPars_v2.txt'  # LOCATION OF PARAMETER FILE
+specDir='/home/water-gator/GSBT/spectra/SN/'      # LOCATION WHERE RAW SPECTRA ARE SAVED
+absDir='/home/water-gator/GSBT/abs/SN/'      # LOCATION WHERE ABSORBANCE SPECTRA ARE SAVED
 
 
 ############################### Read parameters
 
-print('Reading parameters')
-parDict=readPars(parFile)
-
-################################################# PROCESS
-
-print('checking if spectrometer is connected...')
-devices=sb.list_devices()                                   # FIND SPECTROMETER
-if len(devices)>0:
-    spec=sb.Spectrometer(devices[0])
-    print(len(devices),'devices found!',spec)
-
-else:
-        print('Spectrometer not found.')
-
+# print('Reading parameters')
+# parDict=readPars(parFile)
 
 ##### Making the GUI
 
@@ -204,39 +251,46 @@ frame = Frame(root)
 frame.pack()
 
 sample_name_lab = Label(frame,text ='Sample Name')
-sample_name_lab.pack(padx = 5, pady = 5)
+sample_name_lab.pack(padx = 2, pady = 2)
  
 sample_name_entry = Entry(frame, width = 20)
-sample_name_entry.insert(0,'e.g., "sweetwater"')
+sample_name_entry.insert(0,'test')
 sample_name_entry.pack(padx = 5, pady = 5)
 
 collection_date_lab = Label(frame,text ='Collection Date (MM-dd-YYYY)')
-collection_date_lab.pack(padx = 5, pady = 5)
+collection_date_lab.pack(padx = 2, pady = 2)
  
 collection_date_entry = Entry(frame, width = 20)
-collection_date_entry.insert(0,'e.g., "11-04-1991"')
+collection_date_entry.insert(0,datetime.date.today().strftime("%m-%d-%Y"))
 collection_date_entry.pack(padx = 5, pady = 5)
 
 sample_filter_lab = Label(frame,text ='Filtered (True or False)')
-sample_filter_lab.pack(padx = 5, pady = 5)
+sample_filter_lab.pack(padx = 2, pady = 2)
 
 sample_filter_entry = Entry(frame, width = 20)
-sample_filter_entry.insert(0,'e.g., "True"')
+sample_filter_entry.insert(0,'False')
 sample_filter_entry.pack(padx = 5, pady = 5)
 
 measurement_angle_lab = Label(frame,text ='Measurement Angle')
-measurement_angle_lab.pack(padx = 5, pady = 5)
+measurement_angle_lab.pack(padx = 2, pady = 2)
  
 measurement_angle_entry = Entry(frame, width = 20)
-measurement_angle_entry.insert(0,'e.g., "0deg"')
+measurement_angle_entry.insert(0,'0deg')
 measurement_angle_entry.pack(padx = 5, pady = 5)
 
 integration_time_lab = Label(frame,text ='Integration Time (ms)')
-integration_time_lab.pack(padx = 5, pady = 5)
+integration_time_lab.pack(padx = 2, pady = 2)
 
 integration_time_entry = Entry(frame, width = 20)
-integration_time_entry.insert(0,'e.g., "25"')
+integration_time_entry.insert(0,'1')
 integration_time_entry.pack(padx = 5, pady = 5)
+
+delay_time_lab = Label(frame,text ='Delay Time (ms)')
+delay_time_lab.pack(padx = 2, pady = 2)
+
+delay_time_entry = Entry(frame, width = 20)
+delay_time_entry.insert(0,'10')
+delay_time_entry.pack(padx = 5, pady = 5)
  
 ref_Button = Button(frame, text = "Collect Reference", command = analyze_ref)
 ref_Button.pack(padx = 5, pady = 5)
