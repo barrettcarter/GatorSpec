@@ -1,0 +1,107 @@
+10-07-2022
+
+ALL SPEC PARAMS = 1
+
+highly variable spectrum, sometimes partially saturated, with 100 Hz frequency,
+sleep = 9.7 ms, and integration time = 3 ms.
+
+consistent, partially-saturated spectrum with 100 Hz frequency, sleep = 9.7 ms, and integration
+time = 2 ms, 4 ms, 5 ms, 6 ms.
+
+consistent, dark spectrum with 100 Hz frequency, sleep = 9.7 ms, and integration
+time = 1 ms.
+
+consistent, dark spectrum with 100 Hz frequency, sleep = 15 ms, 12.5 ms, 13 ms and integration
+time = 1 ms, 2 ms, and 3 ms.
+
+consistent, dark spectrum with 100 Hz frequency, sleep = 11 ms, and integration
+time = 1 ms, 2 ms.
+
+variable spectrum, usually partially saturated, with 100 Hz frequency,
+sleep = 11 ms, and integration time = 3 ms.
+
+with 50 Hz frequency and 20 ms sleep: 
+dark spectrum (2 flashes) with int time of 5 ms, 10 ms, and 4 ms (?);
+partially-saturated spectrum (1 flash) with in time of 3 ms;
+dark spectrum (1 flash) with int time of 2 ms, 1 ms, 4 ms;
+partially saturated (2 flashed) with int time of 6 ms, 7 ms, 8 ms, 9 ms, 
+variable flashes and spectra with int time of 3 and 4 ms.
+
+with 50 Hz frequency and 21 ms sleep:
+dark spectrum (1 flash) with int time 1, 2, 3, 4 ms;
+dark spectrum (2 flash) with int time 5, 7, 10 ms;
+partially-saturated spectrum (2 flash) with int time 6, 8, 9 ms;
+partially-saturated spectrum (1 flash) with int time 6 ms;
+variable number of flashed with int time of 6 ms
+
+with 50 Hz frequency and 19.7 ms sleep:
+dark spectrum (1 flash) with int time 1 ms;
+partially-saturated spectrum (1 flash) with int time 2, 3, 4 ms;
+
+with 50 Hz frequency and 19 ms sleep:
+partially-saturated, slightly variable spectrum (1 flash) with int time 1, 2, 3, 4 ms;
+
+with 50 Hz frequency and 18 ms sleep:
+dark spectrum (1 flash) with int time 1 ms;
+partially-saturated spectrum (1 flash) with int time 2, 3, 4 ms;
+one dark spectrum collected with int time of 2 ms
+
+with 50 Hz frequency and 18.5 ms sleep:
+variable (partially-saturated or dark) spectrum with int time of 1 ms
+partially-saturated spectrum (1 flash) with int time 2,3 4 ms
+
+
+# With xtiming PARAM = 2
+
+same results. int time of 3 ms may be more consisten, but still variable.
+
+# With 10 ms delay before measurement sequence.
+
+consistently dark spectrum (2 flash) with frequency = 50 Hz  delay = 15, 18, 18.6 ms 
+int time = 1 ms
+
+consistently dark spectrum (1 flash) with frequency = 50 Hz, delay = 9.5, 10 ms, int time = 1 ms
+
+variable (usually part. sat.) reference spectrum (1 flash) and variable (dark or part. sat.) 
+sample spectrum (1 flash) with frequency = 50 Hz, delay = 9 ms, int time = 1 ms
+
+partially saturated reference spectrum (1 flash) and variable (usually dark) 
+sample spectrum (1 flash) with frequency = 50 Hz, delay = 8.5, 8.7 ms, int time = 1 ms
+
+partially saturated reference spectrum (1 flash) and variable (usually part. sat.) 
+sample spectrum (1 flash) with frequency = 50 Hz, delay = 9.1 9.2 ms, int time = 1 ms
+
+variable (usually part. sat.) reference spectrum (1 flash) and partially saturated
+sample spectrum (1 flash) with frequency = 50 Hz, delay = 9.3, 9.25 ms, int time = 1 ms
+
+variable (usually part. sat.) reference spectrum (1 flash) and dark
+sample spectrum (1 flash) with frequency = 50 Hz, delay = 1 ms, int time = 10 ms
+
+usually dark reference spectrum (usually 1 flash) and usually dark
+sample spectrum (1 flash) with frequency = 50 Hz, delay = 1 ms, int time = 1 - 9 ms
+
+# with data collection line at beginning of sequence
+
+No flash with 10 ms sleep and 1 ms int time
+
+1 flash and dark spectrum with 20 ms, 50 ms, and 100 ms sleep and 1 ms int time
+
+#########################
+10-17-2022
+#########################
+
+## Trying previous settings that usually resulted in partially saturated spectra
+
+Variable (dark or partially saturated, but less saturated than previously) reference and
+sample spectrum with (1 flash) with frequency = 50 Hz, delay = 9.3, 9.2 ms, int time = 1 ms
+
+Variable (usually partially saturated, but less saturated than previously) reference spectrum and
+variable (dark or partially saturated, but less saturated than previously)sample spectrum (1 flash) 
+with frequency = 50 Hz, delay = 9.1, 9.0 ms, int time = 1 ms
+
+Variable (usually partially saturated, but less saturated than previously) reference spectrum and
+variable (usually partially saturated, but less saturated than previously)sample spectrum (1 flash) 
+with frequency = 50 Hz, delay = 8.9, 8.8, 8.7 ms, int time = 1 ms
+
+
+

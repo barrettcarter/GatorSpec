@@ -1,0 +1,68 @@
+Place the files for the StellarNet Python driver in a folder named 'StellarNet'
+
+To install Python3.8.13 execute the following commands:
+
+	sudo apt update
+
+	sudo apt upgrade
+
+	sudo apt-get install -y build-essential tk-dev libncurses5-dev libncursesw5-dev libreadline6-dev libdb5.3-dev libgdbm-dev libsqlite3-dev libssl-dev libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev libffi-dev tar wget vim
+
+	wget https://www.python.org/ftp/python/3.8.13/Python-3.8.13.tgz
+
+	tar -zxvf Python-3.8.13.tgz
+
+	cd Python-3.8.13
+
+	./configure --enable-optimizations
+
+	make -j 4
+
+This step could take several hours.
+
+	sudo make altinstall
+
+To make a virtual environment in the StellarNet directory called 'stellarnet', execute:
+
+	cd ~/StellarNet/
+
+	python3.8 -m venv stellarnet
+
+Activate by executing:
+
+	source stellarnet/bin/activate
+
+To install the required packages from the requirement.txt file, execute:
+
+	pip install -r requirement.txt
+
+It will probably stall while installing numpy. If so, mannually power cycle the Pi,
+open another command window, activate the virtual environment, and execute:
+
+	pip install numpy
+
+This installs the latest version of numpy, but it MIGHT be okay..
+
+execute command:
+
+	lsusb
+
+You will see something like:
+
+"Bus 001 Device 003: ID 04b4:8613 Cypress Semiconductor Corp. CY7C68013 EZ-USB FX2 USB 2.0 Development Kit"
+
+The Vendor and Product codes are 04b4 and 8613, respectively. Take note if the codes for your device are different.
+
+Execute the following command, but replacing vendor and product codes, if necessary:
+
+	echo 'SUBSYSTEMS=="usb", ATTRS{idVendor}=="04b4", ATTRS{idProduct}=="8613" GROUP="users", MODE="0666"' | sudo tee -a /etc/udev/rules.d/50-myusb.rules
+
+Reboot the Pi.
+
+execute commands:
+
+	cd StellarNet/
+
+	source stellarnet/bin/activate
+
+	python stellarnet_demo.py
