@@ -5,7 +5,8 @@ dt = datetime
 import matplotlib.pyplot as plt
 from gpiozero import PWMOutputDevice as PWM
 from gpiozero import Button as gpioButton
-from tkinter import (Tk, Frame, Button, Entry, Label)
+from gpiozero import OutputDevice
+from tkinter import (Tk, Frame, Button, Entry, Label, Message, StringVar)
 # import matplotlib
 # matplotlib.use('TkAgg')
 import numpy as np
@@ -264,11 +265,16 @@ lamp_pin = int(26)
 
 # global loop_switch
 loop_switch = gpioButton(loop_switch_pin)
+pump_fwd = OutputDevice(pump_fwd_pin)
+pump_rev = OutputDevice(pump_rev_pin)
+valve = OutputDevice(valve_pin)
 
 # global timestep
 # global system_status
 
-timestep = dt.timedelta(minutes=5)
+sample_timestep = dt.timedelta(minutes=5) # interval between sample analysis events
+flush_timestep = dt.timedelta(minutes=1) # interval between flushes
+#clean_timestep = dt.timedelta(minutes=5) #might not need this if cleaning is based on sample count
 system_status = 'Loop is off.'
 
 # global samples_per_rinse
@@ -276,52 +282,79 @@ system_status = 'Loop is off.'
 samples_per_rinse = 12
 pump_flowrate = 200 #mL/min
 tubing_ID = 3/16*2.54 #cm
+cuvette_volume = 3 # mL
 tubing_area = 3.14159/4*tubing_ID**2
 flow_velocity = pump_flowrate/tubing_area #cm/min
 flow_velocity = flow_velocity/2.54/12/60 #ft/s
+flush_on_time = 3*cuvette_volume/pump_flowrate*60 #seconds
 
 # Initial values of some variables
 
-loop_num = 0
-loop_is_ON = False
-begin_time = dt.datetime.now()
-sample_loop_time = 0
-flush_loop_time = 0
-clean_loop_time = 0
-sample_num = 5
+#loop_num = 0 # for determining how many loops occured since the program was turned on. May not be necessary or useful
+loop_is_ON = False # for turning program on and off with virtual button
+begin_time = dt.datetime.now() # for program timing
+sample_loop_time = 0 # for determining the time since the last sample
+flush_loop_time = 0 # for determining the time since the last flush
+#clean_loop_time = 0 # might not need this if cleaning is based on sample count
+sample_num = 12 # this is for cleaning/taking reference after every x number of samples
 
 
 def loop_OFF():
-    global loop_num
+    #global loop_num
     global loop_is_ON
     global loop_off_time
     global system_status
     #global current_loop_time
-    loop_num = 0
+    #loop_num = 0
     loop_is_ON = False
     loop_off_time = dt.datetime.now()
     #current_loop_time = 0
-    system_status = f'Loop OFF since {loop_off_time}.'
+    system_status.set(f'Loop OFF since {loop_off_time}.')
     
 
 def loop_ON():
     global loop_is_ON
     #global sample_loop_time
-    global loop_num
+    #global loop_num
     global loop_on_time
     global system_status
-    loop_num = 0
+    #loop_num = 0 
     loop_is_ON = True
     #sample_loop_time = 0
     loop_on_time = dt.datetime.now()
-    system_status = f'Loop ON since {loop_on_time}'
+    system_status.set(f'Loop ON since {loop_on_time}')
+    
+def pump_forward():
+    
+    pump_rev.off()
+    pump_fwd.on()
+    
+def pump_reverse():
+    
+    pump_fwd.off()
+    pump_rev.on()
+    
+def pump_off():
+    
+    pump_rev.off()
+    pump_fwd.off()
+    
+def flowpath_sam:
+    
+    valve.on()
+    
+def flowpath_ref:
+    
+    valve.off()
 
 def analysis_loop():
     
-    global loop_num
-    #global timestep
-    global current_loop_time
+    #global loop_num
+    #global sample_timestep
+    global sample_loop_time
     global begin_time
+    global system_status
+    global flush_loop_time
     
     tube_lengths = tube_len_entry.get()
     tube_lengths = tube_lengths.split(sep=',')
@@ -330,28 +363,65 @@ def analysis_loop():
     sample_tube_length = sum(tube_lengths[0,1]) #total length of sample flow path (ft)
     ref_tube_length = sum(tube_lengths[2,3])
     
-    sample_time = sample_tube_length/flow_velocity*1.1 # in seconds
-    ref_time = ref_tube_length/flow_velocity*1.1
+    sample_time = sample_tube_length/flow_velocity*1.5 # in seconds
+    ref_time = ref_tube_length/flow_velocity*1.5
     
     if loop_is_ON and loop_switch.is_pressed:
 
-        if current_loop_time > timestep.seconds:
-            loop_num += 1
-            current_loop_time = 0
-            sample_num += 1
+        if sample_loop_time > sample_timestep.seconds:
+            #loop_num += 1
             
-            flow_path_sam()
-            pump_reverse()
-            sleep(sample_time)
-            pump_forward()
-            sleep(sample_time)
+            sample_loop_time = 0 # reset sample clock
+            sample_num += 1 # count samples for determining when to clean
+            flush_loop_time = 0 # reset flush clock
+            
+            flowpath_sam() #turn on sample flow path
+            pump_reverse() # turn pump on in reverse to clear the sample line
+            sleep(sample_time) # let pump run for enough time to clear line
+            pump_forward() # turn pump on to bring sample in
+            sleep(sample_time) # let pump run for enought time to fill the lines with new sample
+            pump_off()
+            analyze_sample_abs() # collect absorbance data
+            system_status.set(f'Sample analyzed at {dt.datetime.now()}')
+            
+        if flush_loop_time > flush_timestep.seconds:
+            
+            flush_loop_time = 0 # reset flush clock
+            
+            flowpath_sam() # set sample flow path
+            pump_forward() # pump sample in
+            sleep(flush_on_time) # let pump run for short period of time
+            pump_off() # turn pump off
+            system_status.set(f'System flushed at {dt.datetime.now()}')
+            
+        if sample_num >= 5:
+            
+            sample_num = 0
+            
+            flowpath_sam() # set sample flow path for clearing lines
+            pump_reverse() # run pump in reverse for clearing lines
+            sleep(sample_time) # run pump long enough for clearing lines
+            pump_off()
+            flowpath_ref() # set reference flow path for bringing in cleaning/reference solution
+            pump_forward() # run pump forward for bringing in cleaning/reference solution
+            sleep(ref_time) # wait for lines to fill
+            pump_off() # turn pump off
+            analyze_ref() # collect reference spectrum
+            # may need to do some kind of test to check that the reference is good. If it's not, it should be redone.
+            pump_reverse() # run pump in reverse to clear lines
+            sleep(ref_time) # wait for lines to empty
+            pump_off() # turn pump off
+            flowpath_sam() # set sample flow path (needed for safety/contamination?)
+            system_status.set(f'Reference collected at {dt.datetime.now()}')
+            
     
     if loop_is_ON==False:
-        print(f'Loop off for {current_loop_time} seconds.')
+        system_status.set(f'Loop off for {current_loop_time} seconds.')
     
     end_time = dt.datetime.now()
     time_diff = end_time - begin_time
-    current_loop_time += time_diff.seconds
+    sample_loop_time += time_diff.seconds
+    flush_loop_time += time_diff.seconds
     begin_time = dt.datetime.now()
     
     root.after(1000,timed_loop)
@@ -419,11 +489,12 @@ pump_forward_Button.pack(padx = 5, pady = 5)
 pump_reverse_Button = Button(frame, text = "Pump Reverse", command = pump_reverse)
 pump_reverse_Button.pack(padx = 5, pady = 5)
 
-pump_stop_Button = Button(frame, text = "Stop Pump", command = analyze_sample_abs)
+pump_stop_Button = Button(frame, text = "Stop Pump", command = pump_off)
 pump_stop_Button.pack(padx = 5, pady = 5)
 
-system_status_lab = Label(frame,text =f'System Status: {system_status}')
-system_status_lab.pack(padx = 2, pady = 2)
+system_status = StringVar(value = system_status)
+system_status_msg = Message(frame,textvariable =system_status)
+system_status_msg.pack(padx = 2, pady = 2)
 
 root.after(1000,analysis_loop)
  
