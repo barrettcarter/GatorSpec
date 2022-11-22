@@ -59,24 +59,24 @@ def setparam(spectrometer, wav, inttime, xtiming, scansavg, smooth):
     
 spectrometer,wav = sn.array_get_spec(0)
 
-global scansavg
-global smooth
-global xtiming
+# global scansavg
+# global smooth
+# global xtiming
 
 scansavg = 1
 smooth = 1
 xtiming = 1
 
 
-global PMWfreq
+#global PMWfreq
 #global delay_ms
 
 
 PMWfreq = 50
 
 # Variables to be used in spectroscopy functions
-global intTime
-global delay_ms
+# global intTime
+# global delay_ms
 
 intTime = 1
 delay_ms = 8.8
@@ -394,7 +394,7 @@ def analysis_loop():
             pump_off() # turn pump off
             system_status.set(f'System flushed at {dt.datetime.now()}')
             
-        if sample_num >= 5:
+        if sample_num >= samples_per_rinse:
             
             sample_num = 0
             
@@ -424,7 +424,7 @@ def analysis_loop():
     flush_loop_time += time_diff.seconds
     begin_time = dt.datetime.now()
     
-    root.after(1000,timed_loop)
+    root.after(1000,analysis_loop)
 
     
     
