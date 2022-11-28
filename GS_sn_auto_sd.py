@@ -36,14 +36,16 @@ print('...done loading modules')
     # print(parDict)
     # return(parDict)                         # RETURN DICTIONARY TO CALLING FUNCTION
 
-# def writeCSV(iWVL,iSPEC,oFN):
-    # oFL=open(oFN,'w')
-    # oFL.write('WVL,INT\n')
-    # aItems=len(iWVL)
-    # for i in range(aItems):
-        # oStr=','.join([str(x) for x in [iWVL[i],iSPEC[i]]])
-        # oFL.write(oStr+'\n')
-    # oFL.close()
+# We need to keep this or add in a different way to save the power spectrum as a csv file
+
+def writeCSV(iWVL,iSPEC,oFN):
+    oFL=open(oFN,'w')
+    oFL.write('WVL,INT\n')
+    aItems=len(iWVL)
+    for i in range(aItems):
+        oStr=','.join([str(x) for x in [iWVL[i],iSPEC[i]]])
+        oFL.write(oStr+'\n')
+    oFL.close()
 
 #function to get spectrum
 def getSpectrum(spectrometer, wav):
@@ -148,7 +150,7 @@ def analyze_ref():
     dSpec={'wavelengths':wavelengths.tolist(),'power_spec':power_spec.tolist()}  # GET SPECTRA FROM SPECTROMETER
     json.dump(dSpec,oSpecFL)                          # SAVE IN JSON FILE
     oSpecFL.close()                                         # WRITE JSON FILE
-    #writeCSV(wavelengths,power_spec,specDir+oSpecFNcsv)
+    writeCSV(wavelengths,power_spec,specDir+oSpecFNcsv)
         
     # Plot reference spectrum
     plt.figure(num=1,clear=True)
@@ -220,7 +222,7 @@ def analyze_sample_abs():
     dSpec={'wavelengths':wavelengths.tolist(),'power_spec':power_spec.tolist()}  # GET SPECTRA FROM SPECTROMETER
     json.dump(dSpec,oSpecFL)                          # SAVE IN JSON FILE
     oSpecFL.close()                                         # WRITE JSON FILE
-    #writeCSV(wavelengths,power_spec,specDir+oSpecFNcsv)
+    writeCSV(wavelengths,power_spec,specDir+oSpecFNcsv)
         
     # Plot the sample and reference spectra
     plt.figure(num=1,clear=True)
@@ -295,7 +297,7 @@ samples_per_rinse = 12
 pump_flowrate = 200 #mL/min
 tubing_ID = 3/16*2.54 #cm
 cuvette_volume = 3 # mL
-tubing_area = 3.14159/4*tubing_ID**2
+tubing_area = 3.14159/4*tubing_ID**2 #cm^2
 flow_velocity = pump_flowrate/tubing_area #cm/min
 flow_velocity = flow_velocity/2.54/12/60 #ft/s
 flush_on_time = 3*cuvette_volume/pump_flowrate*60 #seconds
