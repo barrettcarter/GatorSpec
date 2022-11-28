@@ -369,9 +369,12 @@ def check_ref():
         if (min_intensity < allow_min_intensity) or (max_intensity > allow_max_intensity): ##SET ALLOW_MIN_INTENSITY and ALLOW_MAX_INTENSITY
             analyze_ref()
             sleep(check_ref_sleep)
+            ref_err = 1
         else:
-            continue
-            
+            ref_err = 0
+            break
+    if ref_err = 1:
+        system_status.set('Error: reference invalid')
 
 def analysis_loop():
     
