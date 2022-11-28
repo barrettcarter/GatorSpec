@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from gpiozero import PWMOutputDevice as PWM
 from gpiozero import Button as gpioButton
 from gpiozero import OutputDevice
+from gpiozero import RGBLED
 from tkinter import (Tk, Frame, Button, Entry, Label, Message, StringVar)
 # import matplotlib
 # matplotlib.use('TkAgg')
@@ -59,6 +60,15 @@ def setparam(spectrometer, wav, inttime, xtiming, scansavg, smooth):
     
 spectrometer,wav = sn.array_get_spec(0)
 
+##UNKNOWN VARIABLES NEED TO BE SET##
+red_pin = ?
+green_pin = ?
+blue_pin = ?
+allow_min_intensity = ?
+allow_max_intensity = ?
+check_ref_sleep = ?
+ref_checks_lim = ?
+
 # global scansavg
 # global smooth
 # global xtiming
@@ -87,6 +97,7 @@ def analyze_ref():
 
     # Variables to be used in function and elsewhere
     global power_spec_ref
+    global wavelengths_ref
     global wavelengths
     global ref_col
     
@@ -123,6 +134,7 @@ def analyze_ref():
     
     intTimeStr=str(intTime)    
     power_spec_ref = power_spec
+    wavelengths_ref = wavelengths
     
     # Write spectrum to csv and json files
     #oSpecFN=('spec_'+sample_name+"_"+meas_ang+'_'+
@@ -345,7 +357,21 @@ def flowpath_sam:
     
 def flowpath_ref:
     
-    valve.off()
+    valve.off()    
+    
+def check_ref():
+    ref_checks = 0
+    ref_df = pd.DataFrame({'intensity': power_spec_ref, 'wavelength': wavelengths_ref}) #dataframe of reference specs
+    min_intensity = ref_df['intensity'].min() #find minimum intensity
+    max_intensity = ref_df['intensity'].max() # find maximum intensity
+    while ref_checks < ref_checks_lim:
+        ref_checks+=1
+        if (min_intensity < allow_min_intensity) or (max_intensity > allow_max_intensity): ##SET ALLOW_MIN_INTENSITY and ALLOW_MAX_INTENSITY
+            analyze_ref()
+            sleep(check_ref_sleep)
+        else:
+            continue
+            
 
 def analysis_loop():
     
@@ -374,7 +400,8 @@ def analysis_loop():
             sample_loop_time = 0 # reset sample clock
             sample_num += 1 # count samples for determining when to clean
             flush_loop_time = 0 # reset flush clock
-            
+            led = RGBLED(red_pin, green_pin, blue_pin)
+            led.color = (0, 0, 1)
             flowpath_sam() #turn on sample flow path
             pump_reverse() # turn pump on in reverse to clear the sample line
             sleep(sample_time) # let pump run for enough time to clear line
@@ -397,7 +424,8 @@ def analysis_loop():
         if sample_num >= samples_per_rinse:
             
             sample_num = 0
-            
+            led = RGBLED(red_pin, green_pin, blue_pin)
+            led.color = (1, 1, 0)
             flowpath_sam() # set sample flow path for clearing lines
             pump_reverse() # run pump in reverse for clearing lines
             sleep(sample_time) # run pump long enough for clearing lines
