@@ -93,6 +93,23 @@ delay_ms = 8.8
 
 ref_col = False
 
+## move check ref funciton into analyze_ref, don't need defined function##
+def check_ref():
+    ref_checks = 0
+    while ref_checks < ref_checks_lim:
+        ref_checks+=1
+        if (min(power_spec_ref) < allow_min_intensity) or (max(power_spec_ref) > allow_max_intensity): ##SET ALLOW_MIN_INTENSITY and ALLOW_MAX_INTENSITY
+            ##add average and standard deviation to be similar (within certain percentage)##
+            ##find reference spectrum on raspberry pi##
+            sleep(check_ref_sleep)
+            analyze_ref() ##replace with lines in analyze ref function for collecting spectrum##         
+            ref_err = 1
+        else:
+            ref_err = 0
+            break
+    if ref_err == 1:
+        system_status.set('Error: reference invalid')
+
 def analyze_ref():
 
     # Variables to be used in function and elsewhere
@@ -120,6 +137,7 @@ def analyze_ref():
 #         lightSource.value = 0
 #         if max(power_spec)<16500:
 #             highIntensity = False
+    ## start of spectrum collection##
     setparam(spectrometer, wav, intTime, xtiming, scansavg, smooth)
     #setparam(spectrometer, wav, intTime)
     
@@ -135,7 +153,7 @@ def analyze_ref():
     intTimeStr=str(intTime)    
     power_spec_ref = power_spec
     wavelengths_ref = wavelengths
-    
+    ##end of spectrum collection##
     # Write spectrum to csv and json files
     #oSpecFN=('spec_'+sample_name+"_"+meas_ang+'_'+
              #intTimeStr+'_'+parDict['locCode']+'_'+datetime_an+'.json') # CREATE OUTPUT JSON FILE FOR SPECTRA
@@ -359,22 +377,6 @@ def flowpath_ref:
     
     valve.off()    
     
-def check_ref():
-    ref_checks = 0
-    ref_df = pd.DataFrame({'intensity': power_spec_ref, 'wavelength': wavelengths_ref}) #dataframe of reference specs
-    min_intensity = ref_df['intensity'].min() #find minimum intensity
-    max_intensity = ref_df['intensity'].max() # find maximum intensity
-    while ref_checks < ref_checks_lim:
-        ref_checks+=1
-        if (min_intensity < allow_min_intensity) or (max_intensity > allow_max_intensity): ##SET ALLOW_MIN_INTENSITY and ALLOW_MAX_INTENSITY
-            analyze_ref()
-            sleep(check_ref_sleep)
-            ref_err = 1
-        else:
-            ref_err = 0
-            break
-    if ref_err = 1:
-        system_status.set('Error: reference invalid')
 
 def analysis_loop():
     
@@ -413,6 +415,7 @@ def analysis_loop():
             pump_off()
             analyze_sample_abs() # collect absorbance data
             system_status.set(f'Sample analyzed at {dt.datetime.now()}')
+            led.color = (0, 0, 0)
             
         if flush_loop_time > flush_timestep.seconds:
             
@@ -444,7 +447,7 @@ def analysis_loop():
             pump_off() # turn pump off
             flowpath_sam() # set sample flow path (needed for safety/contamination?)
             system_status.set(f'Reference collected at {dt.datetime.now()}')
-            
+            led.color = (0, 0, 0)
     
     if loop_is_ON==False:
         system_status.set(f'Loop off for {current_loop_time} seconds.')
