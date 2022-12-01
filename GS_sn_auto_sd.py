@@ -37,7 +37,7 @@ print('...done loading modules')
     # return(parDict)                         # RETURN DICTIONARY TO CALLING FUNCTION
 
 # We need to keep this or add in a different way to save the power spectrum as a csv file
-
+## can change csv file saving to pandas##
 def writeCSV(iWVL,iSPEC,oFN):
     oFL=open(oFN,'w')
     oFL.write('WVL,INT\n')
@@ -63,13 +63,21 @@ def setparam(spectrometer, wav, inttime, xtiming, scansavg, smooth):
 spectrometer,wav = sn.array_get_spec(0)
 
 ##UNKNOWN VARIABLES NEED TO BE SET##
-red_pin = ?
-green_pin = ?
-blue_pin = ?
-allow_min_intensity = ?
-allow_max_intensity = ?
-check_ref_sleep = ?
-ref_checks_lim = ?
+#red_pin = ?
+#green_pin = ?
+#blue_pin = ?
+red_led_pin = 2
+green_led_pin = 3
+check_ref_sleep = 1000
+ref_checks_lim = 4
+## found from descriptive statistics on past references
+allow_ref_min_intensity = 1780*(1-0.16)
+allow_ref_max_intensity = 63000*(1+0.09)
+allow_ref_avg_intensity = 27700
+percent_diff_ref_mean = 0.19
+allow_ref_std_intensity = 13800
+percent_diff_ref_std = 0.18
+
 
 # global scansavg
 # global smooth
@@ -95,22 +103,6 @@ delay_ms = 8.8
 
 ref_col = False
 
-## move check ref funciton into analyze_ref, don't need defined function##
-def check_ref():
-    ref_checks = 0
-    while ref_checks < ref_checks_lim:
-        ref_checks+=1
-        if (min(power_spec_ref) < allow_min_intensity) or (max(power_spec_ref) > allow_max_intensity): ##SET ALLOW_MIN_INTENSITY and ALLOW_MAX_INTENSITY
-            ##add average and standard deviation to be similar (within certain percentage)##
-            ##find reference spectrum on raspberry pi##
-            sleep(check_ref_sleep)
-            analyze_ref() ##replace with lines in analyze ref function for collecting spectrum##         
-            ref_err = 1
-        else:
-            ref_err = 0
-            break
-    if ref_err == 1:
-        system_status.set('Error: reference invalid')
 
 def analyze_ref():
 
@@ -159,6 +151,37 @@ def analyze_ref():
     # Write spectrum to csv and json files
     #oSpecFN=('spec_'+sample_name+"_"+meas_ang+'_'+
              #intTimeStr+'_'+parDict['locCode']+'_'+datetime_an+'.json') # CREATE OUTPUT JSON FILE FOR SPECTRA
+             
+     #check that reference is valid        
+    ref_checks = 0
+    while ref_checks < ref_checks_lim:
+        ref_checks+=1
+        if (min(power_spec_ref) < allow_ref_min_intensity) or (max(power_spec_ref) > allow_ref_max_intensity) or (np.mean(power_spec_ref)-allow_ref_avg_intensity)/allow_ref_avg_intensity>percent_diff_ref_mean or (np.std(power_spec_ref)-allow_ref_std_intensity)/allow_ref_std_intensity>0.18: ##SET ALLOW_MIN_INTENSITY and ALLOW_MAX_INTENSITY
+            ##add average and standard deviation to be similar (within certain percentage)##
+            ##find reference spectrum on raspberry pi##
+            sleep(check_ref_sleep)
+            setparam(spectrometer, wav, intTime, xtiming, scansavg, smooth)
+            #setparam(spectrometer, wav, intTime)
+            
+            sleep(0.01)
+            #data = getSpectrum(spectrometer, wav) # collect power spectrum
+            lightSource.value = 0.1 # turn on light source
+            sleep(delay_ms/1000)
+            data = getSpectrum(spectrometer, wav) # collect power spectrum
+            lightSource.value = 0 # turn off light source
+            power_spec = data[36:,1] # intensities
+            wavelengths=data[36:,0] # wavelengths
+            
+            intTimeStr=str(intTime)    
+            power_spec_ref = power_spec
+            wavelengths_ref = wavelengths      
+            ref_err = 1
+        else:
+            ref_err = 0
+            break
+    if ref_err == 1:
+        system_status.set('Error: reference invalid')
+        
     oSpecFN=('spec_'+sample_name+"_"+
              intTimeStr+'_'+datetime_an+'.json') # CREATE OUTPUT JSON FILE FOR SPECTRA
     oSpecFNcsv=oSpecFN.replace('.json','.csv')
@@ -471,6 +494,7 @@ def analysis_loop():
 parFile='/home/water-gator/GSBT/specPars_v2.txt'  # LOCATION OF PARAMETER FILE
 specDir='/home/water-gator/GSBT/spectra/SN/'      # LOCATION WHERE RAW SPECTRA ARE SAVED
 absDir='/home/water-gator/GSBT/abs/SN/'      # LOCATION WHERE ABSORBANCE SPECTRA ARE SAVED
+#refDir = '/home/water-gator/GSBT/spects/SN/' # can we add another folder for the references? #  #LOCATION FOR REFERENCE SPECTRA#
 
 
 ############################### Read parameters
