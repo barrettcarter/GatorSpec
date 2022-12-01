@@ -63,18 +63,18 @@ def setparam(spectrometer, wav, inttime, xtiming, scansavg, smooth):
 spectrometer,wav = sn.array_get_spec(0)
 
 ##UNKNOWN VARIABLES NEED TO BE SET##
-#red_pin = ?
-#green_pin = ?
-#blue_pin = ?
-red_led_pin = 2
-green_led_pin = 3
-check_ref_sleep = 1000
+red_pin = 2
+green_pin = 3
+blue_pin = 4
+# red_led_pin = 2
+# green_led_pin = 3
+check_ref_sleep = 1
 ref_checks_lim = 4
 ## found from descriptive statistics on past references
 allow_ref_min_intensity = 1780*(1-0.16)
 allow_ref_max_intensity = 63000*(1+0.09)
-allow_ref_avg_intensity = 27700
-percent_diff_ref_mean = 0.19
+#allow_ref_avg_intensity = 27700
+#percent_diff_ref_mean = 0.19
 allow_ref_std_intensity = 13800
 percent_diff_ref_std = 0.18
 
@@ -156,7 +156,10 @@ def analyze_ref():
     ref_checks = 0
     while ref_checks < ref_checks_lim:
         ref_checks+=1
-        if (min(power_spec_ref) < allow_ref_min_intensity) or (max(power_spec_ref) > allow_ref_max_intensity) or (np.mean(power_spec_ref)-allow_ref_avg_intensity)/allow_ref_avg_intensity>percent_diff_ref_mean or (np.std(power_spec_ref)-allow_ref_std_intensity)/allow_ref_std_intensity>0.18: ##SET ALLOW_MIN_INTENSITY and ALLOW_MAX_INTENSITY
+        if ((min(power_spec_ref) < allow_ref_min_intensity) or
+            (max(power_spec_ref) > allow_ref_max_intensity) or
+            abs((np.std(power_spec_ref)-allow_ref_std_intensity)/allow_ref_std_intensity)>
+            percent_diff_ref_std): ##SET ALLOW_MIN_INTENSITY and ALLOW_MAX_INTENSITY
             ##add average and standard deviation to be similar (within certain percentage)##
             ##find reference spectrum on raspberry pi##
             sleep(check_ref_sleep)
@@ -295,7 +298,7 @@ def analyze_sample_abs():
     plt.show(block=False)
     print('Absorbance calculated')
     
-    new_row = [sample_name,filtered,date_col,date_an,time_an,intTime,meas_ang]
+    new_row = [sample_name,date_an,time_an,intTime]
     new_row.extend(absorbance)
     row_df = pd.DataFrame(data = [new_row])
     row_df.to_csv(absDir+'abs_df.csv',mode = 'a',header=False,index=False)
@@ -356,8 +359,8 @@ sample_num = 12 # this is for cleaning/taking reference after every x number of 
 
 def loop_OFF():
     #global loop_num
-    power_led = LED(green_led_pin)
-    power_led.on()
+    # power_led = LED(green_led_pin)
+    # power_led.on()
     global loop_is_ON
     global loop_off_time
     global system_status
@@ -370,8 +373,8 @@ def loop_OFF():
     
 
 def loop_ON():
-    program_led = LED(red_led_pin)
-    program_led.on()
+    # program_led = LED(red_led_pin)
+    # program_led.on()
     global loop_is_ON
     #global sample_loop_time
     #global loop_num
@@ -398,11 +401,11 @@ def pump_off():
     pump_rev.off()
     pump_fwd.off()
     
-def flowpath_sam:
+def flowpath_sam():
     
     valve.on()
     
-def flowpath_ref:
+def flowpath_ref():
     
     valve.off()    
     
@@ -415,6 +418,7 @@ def analysis_loop():
     global begin_time
     global system_status
     global flush_loop_time
+    global sample_num
     
     tube_lengths = tube_len_entry.get()
     tube_lengths = tube_lengths.split(sep=',')
@@ -479,7 +483,7 @@ def analysis_loop():
             led.color = (0, 0, 0)
     
     if loop_is_ON==False:
-        system_status.set(f'Loop off for {current_loop_time} seconds.')
+        system_status.set(f'Loop off for {sample_loop_time} seconds.')
     
     end_time = dt.datetime.now()
     time_diff = end_time - begin_time

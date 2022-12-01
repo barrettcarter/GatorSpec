@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import os
 import glob
 
-path = os.chdir('C:\\UF\\ABE4042C\\Autoanalyzer\\References')
+#path = os.chdir('C:\\UF\\ABE4042C\\Autoanalyzer\\References')
+path = os.chdir('C:/Users/jbarrett.carter/OneDrive/Research/PhD/Data/spectra/SN')
 path = os.getcwd()
 csv_files = glob.glob(os.path.join(path, "*.csv"))
 data_df = pd.DataFrame()
@@ -26,3 +27,4 @@ stats['percent_diff'] = ((stats.max(axis=1)-stats.min(axis=1))/stats.max(axis=1)
 data_df_stats = data_df['INT'].describe(include='all')
 data_df_stats = data_df_stats.loc[['min','max','mean','std']]
 stats['overall'] = data_df_stats
+
