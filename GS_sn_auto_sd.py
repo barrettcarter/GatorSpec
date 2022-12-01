@@ -356,6 +356,8 @@ sample_num = 12 # this is for cleaning/taking reference after every x number of 
 
 def loop_OFF():
     #global loop_num
+    power_led = LED(green_led_pin)
+    power_led.on()
     global loop_is_ON
     global loop_off_time
     global system_status
@@ -368,6 +370,8 @@ def loop_OFF():
     
 
 def loop_ON():
+    program_led = LED(red_led_pin)
+    program_led.on()
     global loop_is_ON
     #global sample_loop_time
     #global loop_num
