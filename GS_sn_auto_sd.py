@@ -203,6 +203,7 @@ def analyze_ref():
     plt.xlabel('wavelength (nm)')
     plt.ylabel('intensity (counts)')
     plt.legend(loc='upper right')
+    plt.savefig(specDir+str(date_an)+'_'+str(time_an) + '_RefSpec.png')
     #plt.ylim([0,16000])
     plt.show(block=False)
     print('Reference collected.')
@@ -230,7 +231,7 @@ def analyze_sample_abs():
 #         intTime=0.9*intTime
 #         spec.integration_time_micros(intTime)   # SET INTEGRATION TIME
 #         print(intTime)
-#         lightSource.value = 0.1 
+#         lightSource.value = 0.1
 #         power_spec=spec.intensities(correct_nonlinearity=True)        # CONDUCT NONLINEARITY AND DARK CORRECTIONS
 #         lightSource.value = 0
 #         if max(power_spec)<16500:
@@ -276,6 +277,7 @@ def analyze_sample_abs():
     plt.xlabel('wavelength (nm)')
     plt.ylabel('intensity (counts)')
     plt.legend(loc='upper right')
+    plt.savefig(specDir+str(date_an)+'_'+str(time_an) + '_SampRefSpec.png')
     #plt.ylim([0,16000])
     plt.show(block=False)
     print('Sample analyzed.')
@@ -295,6 +297,7 @@ def analyze_sample_abs():
     plt.xlabel('wavelength (nm)')
     plt.ylabel('absorbance')
     plt.legend(loc='upper right')
+    plt.savefig(absDir+str(date_an)+'_'+str(time_an) + '_abs.png')
     plt.show(block=False)
     print('Absorbance calculated')
     
